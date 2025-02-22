@@ -5,10 +5,35 @@ import (
 	"fyne.io/fyne/v2/driver/desktop"
 )
 
+func (g *Game) getGhostPieceY() int {
+	if g.currentPiece == nil {
+		return 0
+	}
+
+	ghostY := g.currentPiece.Y
+	for g.canMove(0, 1) {
+		g.currentPiece.Y++
+	}
+	finalY := g.currentPiece.Y
+	g.currentPiece.Y = ghostY
+	return finalY
+}
+
 func (g *Game) setupKeyboard() {
 	if deskCanvas, ok := g.window.Canvas().(desktop.Canvas); ok {
 		deskCanvas.SetOnKeyDown(func(key *fyne.KeyEvent) {
-			if g.gameOver {
+			switch key.Name {
+			case fyne.KeyP:
+				if !g.gameOver {
+					g.togglePause()
+				}
+				return
+			case fyne.KeyR:
+				g.restart()
+				return
+			}
+
+			if g.gameOver || g.paused {
 				return
 			}
 
@@ -41,9 +66,7 @@ func (g *Game) setupKeyboard() {
 				g.updateBoard()
 			case fyne.KeySpace:
 				// Hard drop
-				for g.canMove(0, 1) {
-					g.currentPiece.Y++
-				}
+				g.currentPiece.Y = g.getGhostPieceY()
 				g.lockPiece()
 			}
 		})

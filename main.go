@@ -27,8 +27,11 @@ type Game struct {
 	nextPiece    *Tetromino
 	nextBlocks   [][]*canvas.Rectangle
 	score        int
+	level        int
 	scoreLabel   *widget.Label
+	levelLabel   *widget.Label
 	gameOver     bool
+	paused       bool
 	ticker       *time.Ticker
 }
 
@@ -88,9 +91,12 @@ func (g *Game) createBoard() *fyne.Container {
 		}
 	}
 
-	// Score label
+	// Score and level labels
 	g.scoreLabel.Move(fyne.NewPos(float32(boardWidth*blockSize+20), float32(40+4*blockSize+10)))
+	g.levelLabel = widget.NewLabel("Level: 1")
+	g.levelLabel.Move(fyne.NewPos(float32(boardWidth*blockSize+20), float32(40+4*blockSize+40)))
 	sideContainer.Add(g.scoreLabel)
+	sideContainer.Add(g.levelLabel)
 
 	// Main container
 	mainContainer := container.NewWithoutLayout()
@@ -114,8 +120,32 @@ func (g *Game) updateBoard() {
 		}
 	}
 
+	// Draw ghost piece
+	if g.currentPiece != nil && !g.paused && !g.gameOver {
+		ghostY := g.getGhostPieceY()
+		currentY := g.currentPiece.Y
+		g.currentPiece.Y = ghostY
+
+		for y := 0; y < len(g.currentPiece.Blocks); y++ {
+			for x := 0; x < len(g.currentPiece.Blocks[y]); x++ {
+				if g.currentPiece.Blocks[y][x] {
+					pieceY := g.currentPiece.Y + y
+					pieceX := g.currentPiece.X + x
+					if pieceY >= 0 && pieceY < boardHeight && pieceX >= 0 && pieceX < boardWidth {
+						// Use a semi-transparent version of the piece color for the ghost
+						ghostColor := g.currentPiece.Color
+						ghostColor.A = 50 // Make it more transparent
+						g.blocks[pieceY][pieceX].FillColor = ghostColor
+						g.blocks[pieceY][pieceX].Refresh()
+					}
+				}
+			}
+		}
+		g.currentPiece.Y = currentY
+	}
+
 	// Draw current piece
-	if g.currentPiece != nil {
+	if g.currentPiece != nil && !g.paused {
 		for y := 0; y < len(g.currentPiece.Blocks); y++ {
 			for x := 0; x < len(g.currentPiece.Blocks[y]); x++ {
 				if g.currentPiece.Blocks[y][x] {
@@ -202,6 +232,23 @@ func (g *Game) clearLines() {
 	if linesCleared > 0 {
 		g.score += linesCleared * 100
 		g.scoreLabel.SetText(fmt.Sprintf("Score: %d", g.score))
+
+		// Update level every 1000 points
+		newLevel := (g.score / 1000) + 1
+		if newLevel != g.level {
+			g.level = newLevel
+			g.levelLabel.SetText(fmt.Sprintf("Level: %d", g.level))
+			// Update game speed
+			if g.ticker != nil {
+				// Calculate new speed: starts at 500ms and gets progressively faster
+				// Reduce speed by 45ms per level, minimum 50ms
+				newSpeed := 500 - (g.level-1)*45
+				if newSpeed < 50 {
+					newSpeed = 50
+				}
+				g.ticker.Reset(time.Duration(newSpeed) * time.Millisecond)
+			}
+		}
 	}
 }
 
@@ -247,13 +294,17 @@ func (g *Game) canMove(dx, dy int) bool {
 
 func (g *Game) start() {
 	rand.Seed(time.Now().UnixNano())
+	g.level = 1
+	g.score = 0
+	g.gameOver = false
+	g.paused = false
 	g.spawnNewPiece()
 	g.ticker = time.NewTicker(500 * time.Millisecond)
 
 	go func() {
 		for range g.ticker.C {
-			if g.gameOver {
-				return
+			if g.gameOver || g.paused {
+				continue
 			}
 
 			if g.canMove(0, 1) {
@@ -264,6 +315,32 @@ func (g *Game) start() {
 			}
 		}
 	}()
+}
+
+func (g *Game) togglePause() {
+	g.paused = !g.paused
+	if g.paused {
+		g.scoreLabel.SetText("PAUSED")
+	} else {
+		g.scoreLabel.SetText(fmt.Sprintf("Score: %d", g.score))
+	}
+	g.updateBoard()
+}
+
+func (g *Game) restart() {
+	if g.ticker != nil {
+		g.ticker.Stop()
+	}
+
+	// Clear the board
+	for y := 0; y < boardHeight; y++ {
+		for x := 0; x < boardWidth; x++ {
+			g.board[y][x] = false
+		}
+	}
+
+	g.start()
+	g.updateBoard()
 }
 
 func main() {

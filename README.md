@@ -120,11 +120,31 @@ The game is structured into several key components:
    go run .
    ```
 
-## Future Improvements
+## How to Play
 
-- High score system
-- Level progression
-- Sound effects
-- Piece hold feature
-- Game pause functionality
-- Settings customization
+- Left/Right Arrow: Move tetromino horizontally
+- Up Arrow: Rotate tetromino
+- Down Arrow: Soft drop
+- Space: Hard drop
+- P: Pause/Resume
+- Q: Quit game
+
+## Roadmap
+
+### Core Gameplay
+Implement scoring system (points per line cleared)
+Add level progression with increasing speed
+Support hold piece functionality
+Improve collision detection logic
+
+### UI/UX Enhancements
+Next piece preview panel
+Animated line clear effects
+Game statistics (lines cleared, pieces placed)
+Themed color schemes
+
+### Technical Improvements
+Save/Load game state
+Cross-platform terminal compatibility
+Benchmark and optimize rendering pipeline
+Unit test coverage for rotation/collision logic
