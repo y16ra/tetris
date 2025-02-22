@@ -37,12 +37,12 @@ jobs:
           go build -o dist/tetris-linux-amd64
           
           # Windows build
-          fyne-cross windows -arch=amd64 -output tetris-windows-amd64
+          fyne-cross windows -arch=amd64 -appID com.github.y16ra.tetris -output tetris-windows-amd64
           mv fyne-cross/bin/windows-amd64/tetris-windows-amd64.exe dist/
           
           # macOS builds
-          fyne-cross darwin -arch=amd64 -output tetris-darwin-amd64
-          fyne-cross darwin -arch=arm64 -output tetris-darwin-arm64
+          fyne-cross darwin -arch=amd64 -appID com.github.y16ra.tetris -output tetris-darwin-amd64
+          fyne-cross darwin -arch=arm64 -appID com.github.y16ra.tetris -output tetris-darwin-arm64
           mv fyne-cross/bin/darwin-amd64/tetris-darwin-amd64 dist/
           mv fyne-cross/bin/darwin-arm64/tetris-darwin-arm64 dist/
       - name: Create Release

@@ -267,8 +267,8 @@ func (g *Game) start() {
 }
 
 func main() {
-	myApp := app.New()
-	window := myApp.NewWindow("Tetris")
+	a := app.NewWithID("com.github.y16ra.tetris")
+	window := a.NewWindow("Tetris")
 
 	game := NewGame()
 	game.window = window
@@ -288,5 +288,5 @@ func main() {
 
 	game.start()
 
-	myApp.Run()
+	a.Run()
 }
