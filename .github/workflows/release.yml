@@ -30,10 +30,16 @@ jobs:
           sudo apt-get install -y xorg-dev libgl1-mesa-dev libglu1-mesa-dev mesa-common-dev
       - name: Build for multiple platforms
         run: |
-          GOOS=linux GOARCH=amd64 go build -o dist/tetris-linux-amd64
-          GOOS=darwin GOARCH=amd64 go build -o dist/tetris-darwin-amd64
-          GOOS=darwin GOARCH=arm64 go build -o dist/tetris-darwin-arm64
-          GOOS=windows GOARCH=amd64 go build -o dist/tetris-windows-amd64.exe
+          # Linux build
+          go build -o dist/tetris-linux-amd64
+          
+          # Windows build (requires CGO)
+          sudo apt-get install -y gcc-mingw-w64
+          CGO_ENABLED=1 CC=x86_64-w64-mingw32-gcc GOOS=windows GOARCH=amd64 go build -o dist/tetris-windows-amd64.exe
+          
+          # macOS builds (requires CGO)
+          CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 go build -o dist/tetris-darwin-amd64
+          CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 go build -o dist/tetris-darwin-arm64
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
