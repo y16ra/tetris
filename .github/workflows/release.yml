@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to create release from (e.g., v1.0.0)'
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -13,6 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
       - uses: actions/setup-go@v4
         with:
           go-version: '>=1.21.0'
@@ -25,6 +33,7 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
           files: |
             dist/tetris-linux-amd64
             dist/tetris-darwin-amd64
